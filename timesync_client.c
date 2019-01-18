@@ -20,11 +20,19 @@ timing_prog_1(char *host)
 		clnt_pcreateerror (host);
 		exit (1);
 	}
-#endif	/* DEBUG */
+#endif	/* BEGIN */
+	/* 
+	 Here we will get the system time, call the function and then get the system time again. 
+	 This will effectively let us know how long the server has taken to respond.
+
+	 */
 	// START TIMER
 	struct timeval b4;
 	gettimeofday(&b4, NULL);
 	double b4_in_mill = (b4.tv_sec) * 1000 + (b4.tv_usec) / 1000 ; 
+	// This double function give us the time in ml.
+	// The system will return a timeval struct with two properties called tv.sec and tv.usec, 
+	// which, when combined produce the total time since unix epoch. 
 	//BLOCK CALL
 	result_1 = timing_1((void*)&timing_1_arg, clnt);
 	// END TIMER
@@ -32,31 +40,39 @@ timing_prog_1(char *host)
 	gettimeofday(&after, NULL);
 	double after_in_mill = (after.tv_sec) * 1000 + (after.tv_usec) / 1000 ;
 
-
+	//This if-else catches network errors from the RPC, else if all is well.
 	if (result_1 == (double *) NULL) {
 		clnt_perror (clnt, "call failed");
 	}
 	else{
+		// This is the time we got before the and after the server response
 		printf("ROUND TRIP TIME: %f \n", after_in_mill - b4_in_mill );
+		//The server returns the time in the pointer
 		double servertime = *result_1;
 		printf("Got timeval from server: %f \n", servertime);
+
+		// Here we naively divide by two to get the time one-way
 		double time_to_add = (after_in_mill - b4_in_mill ) / 2.0; 
+		// --- This block of code converts the millisecond back to a timeval struct
 		double sec_to_add = floor(time_to_add / 1000); 
 		double usec_to_add = (time_to_add - (sec_to_add * 1000)) * 1000;
-
+		
+		// Similarly here, except for the server time not the time taken 
 		double server_sec = floor(servertime/ 1000); 
 		double server_usec  = (servertime - (server_sec * 1000)) * 1000;
 
-
+		// Now we adjust the server with with of the RTT
 		long  adjusted_seconds = (long) (server_sec + sec_to_add);
 		long  adjusted_usec    = (long) (server_usec + usec_to_add);
 
+		// Here we set the time on the client computer
 		struct timeval newTime;
-
+		printf("New tv_sec = %lu, New tv_usec = %lu \n", adjusted_seconds, adjusted_usec);
 		newTime.tv_sec = adjusted_seconds;
 		newTime.tv_usec = adjusted_usec;
 		int rc = settimeofday(&newTime  , NULL);
-
+	
+		// This if-else catches the settimeofday() system call errors
 		if(rc==0) {
     		    printf("settimeofday() successful.\n");
     		}

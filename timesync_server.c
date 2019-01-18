@@ -11,10 +11,13 @@ timing_1_svc(void *argp, struct svc_req *rqstp)
 {
 	static double  result;
 	printf("Hit! \n");
-	struct timeval b4;
-	gettimeofday(&b4, NULL);
-	double b4_in_mill = (b4.tv_sec) * 1000 + (b4.tv_usec) / 1000 ; 
-
-	result = b4_in_mill;
+	struct timeval currentTime;
+	// gettimeofday returns a structure with tv_sec with the current time in seconds
+	// and tv_usec with remaining time current time in microseconds
+	gettimeofday(&currentTime, NULL);
+	// we then convert this to miliseconds using some math conversions
+	double currentTime_in_mill = (currentTime.tv_sec) * 1000 + (b4.tv_usec) / 1000 ; 
+	result = currentTime_in_mill;
+	//send the result to any rpc calling client. 
 	return &result;
 }
