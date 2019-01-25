@@ -16,7 +16,7 @@ timing_1_svc(void *argp, struct svc_req *rqstp)
 	// and tv_usec with remaining time current time in microseconds
 	gettimeofday(&currentTime, NULL);
 	// we then convert this to miliseconds using some math conversions
-	double currentTime_in_mill = (currentTime.tv_sec) * 1000 + (b4.tv_usec) / 1000 ; 
+	double currentTime_in_mill = (currentTime.tv_sec) * 1000 + (currentTime.tv_usec) / 1000 ; 
 	result = currentTime_in_mill;
 	//send the result to any rpc calling client. 
 	return &result;
